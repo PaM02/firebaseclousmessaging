@@ -33,7 +33,7 @@ class _MainScreenState extends State<MainScreen> {
 
     listenFCM();
 
-    getToken();
+    //getToken();
 
     FirebaseMessaging.instance.subscribeToTopic("Animal");
   }
@@ -68,7 +68,7 @@ class _MainScreenState extends State<MainScreen> {
               'id': '1',
               'status': 'done'
             },
-            "to": token,
+            "to": "dn7im-sQR6yCGPD0Gt5HgE:APA91bGoaPJLuyQPL1KETYr8ApP1ZV_FwbLqN9nSy5jxAO9qPy7GhyJbuzfm0GVfNVdYOHpOQA6pGXqxaYROmFOca6NzbHIckf-5LnSCChqEi9zUwtQpoGDnTLF_QiEM9gAuUxY6j3wM",
           },
         ),
       );
