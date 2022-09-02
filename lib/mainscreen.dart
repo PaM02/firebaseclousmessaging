@@ -1,16 +1,16 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fcm/screen_2.dart';
+import 'package:fcm/services/service_notification.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _MainScreenState createState() => _MainScreenState();
 }
 
@@ -18,8 +18,6 @@ class _MainScreenState extends State<MainScreen> {
   TextEditingController username = TextEditingController();
   TextEditingController title = TextEditingController();
   TextEditingController body = TextEditingController();
-  late AndroidNotificationChannel channel;
-  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
 
   String? mtoken = " ";
 
@@ -27,142 +25,18 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
 
-    requestPermission();
+    NotificationService.requestPermission();
 
-    loadFCM();
+    NotificationService.loadFCM();
 
-    listenFCM();
+    NotificationService.listenFCM();
 
-    //getToken();
+    getToken();
 
-    FirebaseMessaging.instance.subscribeToTopic("Animal");
-  }
+    NotificationService.init();
+    listenNotification();
 
-  void getTokenFromFirestore() async {
-
-  }
-
-  void saveToken(String token) async {
-    await FirebaseFirestore.instance.collection("UserTokens").doc("User1").set({
-      'token' : token,
-    });
-  }
-
-  void sendPushMessage(String token, String body, String title) async {
-    try {
-      await http.post(
-        Uri.parse('https://fcm.googleapis.com/fcm/send'),
-        headers: <String, String>{
-          'Content-Type': 'application/json',
-          'Authorization': 'key=AAAAHf3aoZ4:APA91bHO2QXJOLQxzzu0B0P8H0NnabRDzAi8sgfA_Y9ZDAZibz4N9J88YG9n9FWHyMcLffcD9k-ngyZx37eOIsYdxGBsxQ9ZIan_GUznE7b-ubByp9s-K_Bgq_Qne63Ma6e9RZ77IdrX',
-        },
-        body: jsonEncode(
-          <String, dynamic>{
-            'notification': <String, dynamic>{
-              'body': body,
-              'title': title
-            },
-            'priority': 'high',
-            'data': <String, dynamic>{
-              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
-              'id': '1',
-              'status': 'done'
-            },
-            "to": "dn7im-sQR6yCGPD0Gt5HgE:APA91bGoaPJLuyQPL1KETYr8ApP1ZV_FwbLqN9nSy5jxAO9qPy7GhyJbuzfm0GVfNVdYOHpOQA6pGXqxaYROmFOca6NzbHIckf-5LnSCChqEi9zUwtQpoGDnTLF_QiEM9gAuUxY6j3wM",
-          },
-        ),
-      );
-    } catch (e) {
-      print("error push notification");
-    }
-  }
-
-  void getToken() async {
-    await FirebaseMessaging.instance.getToken().then(
-            (token) {
-          setState(() {
-            mtoken = token;
-          });
-          print("token $token");
-          saveToken(token!);
-        }
-    );
-  }
-
-  void requestPermission() async {
-    FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-    NotificationSettings settings = await messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
-
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
-    } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
-      print('User granted provisional permission');
-    } else {
-      print('User declined or has not accepted permission');
-    }
-  }
-
-  void listenFCM() async {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      RemoteNotification? notification = message.notification;
-      AndroidNotification? android = message.notification?.android;
-      if (notification != null && android != null && !kIsWeb) {
-        flutterLocalNotificationsPlugin.show(
-          notification.hashCode,
-          notification.title,
-          notification.body,
-          NotificationDetails(
-            android: AndroidNotificationDetails(
-              channel.id,
-              channel.name,
-              // TODO add a proper drawable resource to android, for now using
-              //      one that already exists in example app.
-              icon: 'launch_background',
-            ),
-          ),
-        );
-      }
-    });
-  }
-
-  void loadFCM() async {
-    if (!kIsWeb) {
-      channel = const AndroidNotificationChannel(
-        'high_importance_channel', // id
-        'High Importance Notifications', // title
-        importance: Importance.high,
-        enableVibration: true,
-      );
-
-      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-      /// Create an Android Notification Channel.
-      ///
-      /// We use this channel in the `AndroidManifest.xml` file to override the
-      /// default FCM channel to enable heads up notifications.
-      await flutterLocalNotificationsPlugin
-          .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(channel);
-
-      /// Update the iOS foreground notification presentation options to allow
-      /// heads up notifications.
-      await FirebaseMessaging.instance
-          .setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-    }
+    FirebaseMessaging.instance.subscribeToTopic("Likid");
   }
 
   @override
@@ -181,31 +55,85 @@ class _MainScreenState extends State<MainScreen> {
             TextFormField(
               controller: body,
             ),
-            GestureDetector(
-              onTap: () async {
-                String name = username.text.trim();
-                String titleText = title.text;
-                String bodyText = body.text;
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      String name = username.text.trim();
+                      String titleText = title.text;
+                      String bodyText = body.text;
 
-                if(name != "") {
-                  DocumentSnapshot snap =
-                  await FirebaseFirestore.instance.collection("UserTokens").doc(name).get();
+                      if (name != "") {
+                        DocumentSnapshot snap = await FirebaseFirestore.instance
+                            .collection("UserTokens")
+                            .doc(name)
+                            .get();
 
-                  String token = snap['token'];
-                  print(token);
+                        String token = snap['token'];
+                        print(token);
 
-                  sendPushMessage(token, titleText, bodyText);
-                }
-              },
-              child: Container(
-                height: 40,
-                width: 200,
-                color: Colors.red,
+                        sendPushMessage(token, titleText, bodyText);
+                      }
+                    },
+                    child: Text('button'),
+                  )
+                ],
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void saveToken(String token) async {
+    await FirebaseFirestore.instance.collection("UserTokens").doc("User1").set({
+      'token': token,
+    });
+  }
+
+  void getToken() async {
+    await FirebaseMessaging.instance.getToken().then((token) {
+      setState(() {
+        mtoken = token;
+      });
+      print("token $token");
+      saveToken(token!);
+    });
+  }
+
+  void listenNotification() =>
+      NotificationService.onNotifications.stream.listen(onClickNotification);
+
+  void onClickNotification(String? payload) => Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyWidget(payload: payload)));
+
+  void sendPushMessage(String token, String title, String body) async {
+    try {
+      await http.post(
+        Uri.parse('https://fcm.googleapis.com/fcm/send'),
+        headers: <String, String>{
+          'Content-Type': 'application/json',
+          'Authorization':
+              'key=AAAAHf3aoZ4:APA91bHO2QXJOLQxzzu0B0P8H0NnabRDzAi8sgfA_Y9ZDAZibz4N9J88YG9n9FWHyMcLffcD9k-ngyZx37eOIsYdxGBsxQ9ZIan_GUznE7b-ubByp9s-K_Bgq_Qne63Ma6e9RZ77IdrX',
+        },
+        body: jsonEncode(
+          <String, dynamic>{
+            'notification': <String, dynamic>{'title': title,'body': body},
+            'priority': 'high',
+            'data': <String, dynamic>{
+              'click_action': 'FLUTTER_NOTIFICATION_CLICK',
+              'id': '1',
+              'status': 'done'
+            },
+            "to": token,
+          },
+        ),
+      );
+    } catch (e) {
+      print("error push notification");
+    }
   }
 }
