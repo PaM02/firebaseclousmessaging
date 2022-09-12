@@ -117,11 +117,11 @@ class _MainScreenState extends State<MainScreen> {
         headers: <String, String>{
           'Content-Type': 'application/json',
           'Authorization':
-              'key=AAAAHf3aoZ4:APA91bHO2QXJOLQxzzu0B0P8H0NnabRDzAi8sgfA_Y9ZDAZibz4N9J88YG9n9FWHyMcLffcD9k-ngyZx37eOIsYdxGBsxQ9ZIan_GUznE7b-ubByp9s-K_Bgq_Qne63Ma6e9RZ77IdrX',
+              'key=AAAA5IKnCkQ:APA91bGqnmLq2q_4-ld-P3ycsLHH_5F-S8lQvX_k8xUqlv1_ThmNdRyAVrcGhT8ZTpayUwQ3PMYZv3xAn8QrTWDzuwGUsEnsbZBDUivBMh1hER0ykWOk2VfjnPhXYY6C3ndAFYQLvIml',
         },
         body: jsonEncode(
           <String, dynamic>{
-            'notification': <String, dynamic>{'title': title,'body': body},
+            'notification': <String, dynamic>{'title': title, 'body': body},
             'priority': 'high',
             'data': <String, dynamic>{
               'click_action': 'FLUTTER_NOTIFICATION_CLICK',
